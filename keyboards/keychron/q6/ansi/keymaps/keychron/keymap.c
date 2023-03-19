@@ -63,10 +63,48 @@ void housekeeping_task_user(void) {
     housekeeping_task_keychron();
 }
 
-bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    if(!process_record_keychron(keycode, record)) {
+static bool caps_lock_enabled = false;
+static bool rgb_enabled = false;
+
+void toggle_caps_lock(void) {
+    caps_lock_enabled = !caps_lock_enabled;
+    if (caps_lock_enabled) {
+        tap_code(KC_CAPS);
+    } else {
+        tap_code(KC_CAPS);
+    }
+}
+
+void toggle_rgb_light(void) {
+    if (rgb_enabled) {
+        rgb_enabled = false;
+        rgblight_disable();
+    } else {
+        rgb_enabled = true;
+        rgblight_enable();
+    }
+}
+
+bool process_caps_lock(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == KC_CAPS){
+        if (record->event.pressed) {
+            toggle_caps_lock();
+            toggle_rgb_light();
+        }
         return false;
     }
+    return true;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (!process_record_keychron(keycode, record)) return false;
+    if (!process_caps_lock(keycode, record)) return false;
 
     return true;
+}
+
+void matrix_scan_user(void) {
+    if (!host_keyboard_led_state().caps_lock && rgblight_is_enabled()) {
+        rgblight_disable();
+    }
 }
